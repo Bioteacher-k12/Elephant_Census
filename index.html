@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Great Elephant Census: Aerial Transect Lab & Regional Data Investigation</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            forest: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              700: '#15803d',
+              800: '#166534',
+              900: '#1B4332',
+              950: '#0f291e',
+            },
+            savanna: {
+              50: '#fbf9f5',
+              100: '#f5f0e6',
+              200: '#e8dec8',
+              300: '#d6c5a3',
+              700: '#6b5e45',
+              800: '#4a402e',
+            },
+            ochre: {
+              100: '#fef3c7',
+              500: '#f59e0b',
+              600: '#D97706',
+              700: '#b45309',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Smooth transitions and print styling */
+    body {
+      background-color: #fbf9f5;
+      color: #1f2937;
+    }
+    .elephant-marker {
+      cursor: pointer;
+      pointer-events: all;
+      transition: filter 0.15s ease;
+    }
+    .elephant-marker:hover {
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.95));
+    }
+    .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      line-height: 1.2;
+    }
+    .fraction-num {
+      padding: 0 6px 3px 6px;
+      border-bottom: 1px solid currentColor;
+    }
+    .fraction-den {
+      padding: 3px 6px 0 6px;
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background-color: #ffffff !important;
+      }
+      #print-report-modal {
+        position: static !important;
+        background: white !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+      #print-report-content {
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        max-height: none !important;
+        overflow: visible !important;
+      }
+    }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Top Header Banner -->
+  <header class="bg-forest-900 text-white shadow-md no-print">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-start sm:items-center gap-3">
+        <!-- Custom Elephant SVG Emblem -->
+        <div class="w-11 h-11 rounded-xl bg-ochre-600/20 border border-ochre-500/40 flex items-center justify-center shrink-0">
+          <svg class="w-7 h-7 text-ochre-500" viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
+            <path d="M51 24c-1.5-5.5-6.5-9-12.5-9H25c-6.6 0-12 5.4-12 12v7c0 3.3-2.2 6-5 6v4c5 0 9-4 9-9v-3c1.5 1.8 3.7 3 6 3h1v14h6V36h10v13h6V35.5c2.4-1.2 4-3.7 4-6.5v-1h3c1.7 0 3 1.3 3 3v7h4v-7c0-3.5-2.5-6.4-6-7zM21 25a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wider bg-ochre-600 text-white px-2.5 py-0.5 rounded-full">Utah SEEd BIO.1.1</span>
+            <span class="text-xs text-forest-100/80">Population Ecology &amp; Conservation Biology</span>
+          </div>
+          <h1 class="text-lg sm:text-xl font-extrabold tracking-tight mt-1">The Great Elephant Census: Aerial Transect Lab</h1>
+        </div>
+      </div>
+
+      <!-- Student Name & Report Button -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <input
+          id="student-name"
+          type="text"
+          placeholder="Enter Student Name..."
+          aria-label="Student Name"
+          class="px-3 py-2 text-sm rounded-lg bg-forest-950/70 border border-forest-700 text-white placeholder-forest-100/60 focus:outline-none focus:ring-2 focus:ring-ochre-500 w-44 sm:w-52"
+        />
+        <button
+          onclick="openReportModal()"
+          class="px-4 py-2 text-sm font-semibold rounded-lg bg-ochre-600 hover:bg-ochre-700 text-white shadow transition flex items-center gap-1.5 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>Lab Summary</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Module Progress Navigation Bar -->
+    <nav class="bg-forest-950/60 border-t border-forest-800" aria-label="Lab Modules">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <button onclick="switchTab(1)" id="tab-btn-1" class="tab-btn flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs sm:text-sm font-semibold transition bg-white text-forest-900 shadow cursor-pointer">
+          <span class="truncate">1. Survey Briefing</span>
+          <span id="badge-1" class="ml-2 px-2 py-0.5 text-[11px] rounded-full bg-savanna-200 text-savanna-800">Start</span>
+        </button>
+        <button onclick="switchTab(2)" id="tab-btn-2" class="tab-btn flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs sm:text-sm font-semibold transition text-forest-100 hover:bg-forest-800/60 cursor-pointer">
+          <span class="truncate">2. Aerial Transect Map</span>
+          <span id="badge-2" class="ml-2 px-2 py-0.5 text-[11px] rounded-full bg-forest-800 text-forest-100">0/9</span>
+        </button>
+        <button onclick="switchTab(3)" id="tab-btn-3" class="tab-btn flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs sm:text-sm font-semibold transition text-forest-100 hover:bg-forest-800/60 cursor-pointer">
+          <span class="truncate">3. Density &amp; Estimates</span>
+          <span id="badge-3" class="ml-2 px-2 py-0.5 text-[11px] rounded-full bg-forest-800 text-forest-100">0/6</span>
+        </button>
+        <button onclick="switchTab(4)" id="tab-btn-4" class="tab-btn flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs sm:text-sm font-semibold transition text-forest-100 hover:bg-forest-800/60 cursor-pointer">
+          <span class="truncate">4. Regional Census Data</span>
+          <span id="badge-4" class="ml-2 px-2 py-0.5 text-[11px] rounded-full bg-forest-800 text-forest-100">0/6</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 no-print">
+
+    <!-- =================================================================== -->
+    <!-- MODULE 1: INTRODUCTION & AERIAL SURVEY BRIEFING                     -->
+    <!-- =================================================================== -->
+    <section id="module-1" class="module-panel space-y-6">
+      <!-- Learning Target Banner -->
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-ochre-700">Today's Field Mission &bull; Standard BIO.1.1</span>
+          <h2 class="text-xl sm:text-2xl font-bold text-forest-900 mt-1">How Do Scientists Count Elephants Across an Entire Continent?</h2>
+          <p class="text-sm text-gray-600 mt-1">Analyze aerial transect sampling methods and real Great Elephant Census data to determine how biotic and abiotic factors affect population stability and change.</p>
+        </div>
+        <div class="bg-savanna-100 border border-savanna-200 rounded-xl px-4 py-3 shrink-0 text-xs sm:text-sm">
+          <div class="font-bold text-forest-900">Success Criteria:</div>
+          <ul class="text-savanna-800 mt-1 space-y-0.5 list-disc list-inside">
+            <li>Calculate transect areas &amp; densities</li>
+            <li>Estimate total population from sample counts</li>
+            <li>Evaluate continental population trends</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Video Briefing + Background Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left Column: Intro Video Player & Drive Link -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 class="text-lg font-bold text-forest-900 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-ochre-600"></span>
+                Field Briefing Video: The Great Elephant Census
+              </h3>
+              <a
+                href="https://drive.google.com/file/d/1pNCc-cGiw7PaWvuGrLEgp6o_OdOUyrCR/view?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs font-semibold shadow-sm transition"
+              >
+                <svg class="w-4 h-4 text-ochre-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span>Watch Intro Video in Google Drive</span>
+                <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+              </a>
+            </div>
+            <p class="text-xs sm:text-sm text-gray-600 mb-4">
+              Watch the introductory video below (or open it directly in Google Drive) to see how aerial survey teams fly systematic transects across African savannas to monitor elephant populations.
+            </p>
+            <!-- Responsive Video Iframe Container -->
+            <div class="relative w-full overflow-hidden rounded-xl border border-savanna-300 bg-forest-950 aspect-video shadow-inner">
+              <iframe
+                src="https://drive.google.com/file/d/1pNCc-cGiw7PaWvuGrLEgp6o_OdOUyrCR/preview"
+                class="absolute inset-0 w-full h-full border-0"
+                allow="autoplay; fullscreen"
+                title="The Great Elephant Census Intro Video"
+              ></iframe>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Background Reading & Methods Comparison -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-forest-900">Mission Background</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl bg-savanna-100 border border-savanna-200 p-3.5">
+              <div class="text-xs font-semibold text-savanna-700 uppercase">1970s Estimate</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-forest-900 mt-0.5">1.3 Million</div>
+              <div class="text-xs text-gray-600 mt-1">Forest &amp; savanna elephants across 35+ African countries</div>
+            </div>
+            <div class="rounded-xl bg-ochre-100/70 border border-ochre-500/30 p-3.5">
+              <div class="text-xs font-semibold text-ochre-700 uppercase">Census Finding</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-ochre-700 mt-0.5">352,271</div>
+              <div class="text-xs text-gray-700 mt-1">African savanna elephants remaining (~73% decline)</div>
+            </div>
+          </div>
+
+          <p class="text-sm text-gray-700 leading-relaxed">
+            Populations of African elephants have declined at an alarming rate due to <strong>habitat destruction</strong> and <strong>poaching fueled by the international ivory trade</strong>. To measure how many elephants remained across Africa, researchers designed a standardized continent-wide aerial survey and compared two counting strategies:
+          </p>
+
+          <div class="space-y-3">
+            <div class="rounded-xl border border-gray-200 p-3.5 bg-gray-50">
+              <div class="font-bold text-sm text-gray-900">Option A: Total Count</div>
+              <p class="text-xs text-gray-600 mt-1">
+                Flying over 100% of an entire region to count every single elephant. Accurate for small parks, but prohibitively expensive, slow, and dangerous across millions of square kilometers.
+              </p>
+            </div>
+            <div class="rounded-xl border-2 border-forest-800/30 p-3.5 bg-forest-50/60">
+              <div class="font-bold text-sm text-forest-900">Option B: Sample Count (Aerial Strip Transects)</div>
+              <p class="text-xs text-gray-700 mt-1">
+                Survey regions are divided into sections called <strong>strata</strong>. Planes fly straight <strong>transect lines</strong> while observers count elephants inside two narrow <strong>counting strips</strong> (one on each side of the plane). Researchers calculate elephant density (elephants/km<sup>2</sup>) in the strips and extrapolate to estimate the total population.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Flight Comprehension Check -->
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-forest-900">Pre-Flight Comprehension Check</h3>
+            <p class="text-xs sm:text-sm text-gray-600">Answer these 2 quick questions to verify your survey protocol before launching the aircraft.</p>
+          </div>
+          <button
+            onclick="checkModule1()"
+            class="px-4 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs sm:text-sm font-semibold transition cursor-pointer"
+          >
+            Check Answers
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="rounded-xl bg-savanna-50 border border-savanna-200 p-4">
+            <label for="m1-q1" class="block text-sm font-semibold text-forest-900 mb-2">
+              1. Why did researchers choose a Sample Count instead of a Total Count for the Great Elephant Census?
+            </label>
+            <select id="m1-q1" class="w-full rounded-lg border border-savanna-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800">
+              <option value="">-- Select an explanation --</option>
+              <option value="a">Elephants only live along straight flight paths.</option>
+              <option value="b">Counting every elephant across 35+ countries is too costly and time-consuming; strip density estimates the total reliably.</option>
+              <option value="c">Total counts are illegal under international wildlife treaties.</option>
+            </select>
+            <p id="m1-q1-fb" class="text-xs mt-2 font-medium hidden"></p>
+          </div>
+
+          <div class="rounded-xl bg-savanna-50 border border-savanna-200 p-4">
+            <label for="m1-q2" class="block text-sm font-semibold text-forest-900 mb-2">
+              2. In an aerial strip transect, which elephants are recorded in the sample count?
+            </label>
+            <select id="m1-q2" class="w-full rounded-lg border border-savanna-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800">
+              <option value="">-- Select an explanation --</option>
+              <option value="a">Only elephants spotted inside the defined counting strips on either side of the plane's flight path.</option>
+              <option value="b">Every elephant visible anywhere on the horizon, regardless of distance.</option>
+              <option value="c">Only elephants standing directly underneath the plane's belly.</option>
+            </select>
+            <p id="m1-q2-fb" class="text-xs mt-2 font-medium hidden"></p>
+          </div>
+        </div>
+
+        <div class="mt-5 flex justify-end">
+          <button
+            onclick="switchTab(2)"
+            class="px-5 py-2.5 rounded-xl bg-ochre-600 hover:bg-ochre-700 text-white text-sm font-semibold shadow-sm transition flex items-center gap-2 cursor-pointer"
+          >
+            <span>Proceed to Module 2: Aerial Transect Map</span>
+            <span>&rarr;</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- MODULE 2: INTERACTIVE AERIAL TRANSECT LANDSCAPE & MEASUREMENTS      -->
+    <!-- =================================================================== -->
+    <section id="module-2" class="module-panel hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-savanna-200">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-ochre-700">Module 2 &bull; Aerial Survey Simulation</span>
+            <h2 class="text-xl font-bold text-forest-900 mt-0.5">Interactive Savanna Transect Landscape</h2>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1">
+              Click on each elephant on the aerial map to tag and count them. Pay close attention to whether an elephant is <strong>inside a shaded counting strip</strong> or <strong>outside / on the central flight path</strong>!
+            </p>
+          </div>
+
+          <!-- Map Controls & Live Tag Counters -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              id="toggle-dims-btn"
+              onclick="toggleMapDimensions()"
+              class="px-3 py-2 rounded-xl text-xs font-semibold border border-savanna-300 bg-savanna-100 hover:bg-savanna-200 text-forest-900 transition cursor-pointer"
+            >
+              Hide Dimensions
+            </button>
+            <button
+              id="toggle-blindspot-btn"
+              onclick="toggleBlindSpotInfo()"
+              class="px-3 py-2 rounded-xl text-xs font-semibold border border-ochre-500/40 bg-ochre-100/70 hover:bg-ochre-100 text-ochre-700 transition cursor-pointer"
+            >
+              Why Two Strips? (Blind Spot)
+            </button>
+            <button
+              onclick="resetElephantTags()"
+              class="px-3 py-2 rounded-xl text-xs font-semibold border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition cursor-pointer"
+            >
+              Reset Tags
+            </button>
+          </div>
+        </div>
+
+        <!-- Blind Spot Collapsible Callout -->
+        <div id="blindspot-callout" class="hidden mt-4 rounded-xl bg-ochre-100/60 border border-ochre-500/40 p-4 text-xs sm:text-sm text-gray-800">
+          <div class="font-bold text-ochre-700 mb-1">Aerial Survey Protocol: Flight Path Blind Spot &amp; Strip Width</div>
+          <p>
+            Each transect has <strong>two counting strips</strong>—one on each side of the plane's dashed flight path—because observers looking out the left and right windows cannot see directly beneath the fuselage (the central grey corridor).
+            Each counting strip is <strong>2 km wide</strong>, so the combined counting width of a transect is <strong>2 km &times; 2 = 4 km</strong>. Elephants standing directly on the dashed flight line or outside the shaded strips are <em>not</em> included in the strip sample count (though they are included in a full-landscape Total Count).
+          </p>
+        </div>
+
+        <!-- Live Tag Counter Strip -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+          <div class="rounded-xl bg-forest-50 border border-forest-800/20 p-3 text-center">
+            <div class="text-[11px] font-bold uppercase text-forest-800">Transect A Strip Tagged</div>
+            <div class="text-xl font-extrabold text-forest-900 mt-0.5"><span id="count-strip-a">0</span> <span class="text-xs font-normal text-gray-500">/ 2</span></div>
+          </div>
+          <div class="rounded-xl bg-forest-50 border border-forest-800/20 p-3 text-center">
+            <div class="text-[11px] font-bold uppercase text-forest-800">Transect B Strip Tagged</div>
+            <div class="text-xl font-extrabold text-forest-900 mt-0.5"><span id="count-strip-b">0</span> <span class="text-xs font-normal text-gray-500">/ 4</span></div>
+          </div>
+          <div class="rounded-xl bg-savanna-100 border border-savanna-200 p-3 text-center">
+            <div class="text-[11px] font-bold uppercase text-savanna-700">Outside Strips Tagged</div>
+            <div class="text-xl font-extrabold text-savanna-800 mt-0.5"><span id="count-outside">0</span> <span class="text-xs font-normal text-gray-500">/ 9</span></div>
+          </div>
+          <div class="rounded-xl bg-ochre-100/70 border border-ochre-500/30 p-3 text-center">
+            <div class="text-[11px] font-bold uppercase text-ochre-700">Total Map Tagged</div>
+            <div class="text-xl font-extrabold text-ochre-700 mt-0.5"><span id="count-total-map">0</span> <span class="text-xs font-normal text-gray-600">/ 15</span></div>
+          </div>
+        </div>
+
+        <!-- Interactive SVG Aerial Map (40 km x 12 km proportional layout) -->
+        <div class="w-full overflow-hidden rounded-2xl border-2 border-savanna-300 shadow-inner bg-[#7d775c]">
+          <svg id="savanna-svg" viewBox="0 0 800 320" class="w-full h-auto block select-none" role="img" aria-label="Aerial savanna map showing river, Transect A, Transect B, and 15 elephants">
+            <defs>
+              <!-- Subtle terrain gradient -->
+              <linearGradient id="savannaGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#878062" />
+                <stop offset="50%" stop-color="#787255" />
+                <stop offset="100%" stop-color="#6b654a" />
+              </linearGradient>
+              <!-- Reusable Elephant Silhouette Symbol -->
+              <g id="elephant-icon">
+                <path d="M-12 4 C-12 -3 -7 -8 0 -8 L8 -8 C13 -8 16 -4 16 1 L16 11 L12 11 L12 4 L7 4 L7 11 L3 11 L3 4 L-4 4 L-4 11 L-8 11 L-8 3 C-10 3 -11 5 -11 8 C-11 10 -13 10 -14 8 C-15 6 -14 4 -12 4 Z" />
+                <circle cx="-8" cy="-3" r="1.1" fill="#ffffff" />
+              </g>
+            </defs>
+
+            <!-- Base Savanna Terrain (represents 40 km wide x 12 km tall) -->
+            <rect x="0" y="0" width="800" height="320" fill="url(#savannaGrad)" />
+
+            <!-- Scattered Acacia Trees / Bushes for ecological realism -->
+            <g fill="#4d5d36" opacity="0.65">
+              <circle cx="45" cy="35" r="4" /><circle cx="390" cy="28" r="5" /><circle cx="720" cy="22" r="4" />
+              <circle cx="52" cy="110" r="3.5" /><circle cx="350" cy="74" r="4.5" /><circle cx="445" cy="70" r="3.5" />
+              <circle cx="290" cy="112" r="3.5" /><circle cx="530" cy="76" r="4" /><circle cx="635" cy="155" r="4.5" />
+              <circle cx="240" cy="195" r="4" /><circle cx="320" cy="225" r="4.5" /><circle cx="715" cy="205" r="4" />
+              <circle cx="205" cy="278" r="5" /><circle cx="430" cy="262" r="4.5" /><circle cx="655" cy="295" r="4.5" />
+              <circle cx="60" cy="292" r="4" />
+            </g>
+
+            <!-- Winding Blue River on the Left -->
+            <path d="M 185 0 C 195 55, 175 100, 125 145 C 80 185, 55 230, 0 265 L 0 215 C 40 190, 65 155, 105 115 C 145 75, 155 40, 145 0 Z" fill="#4b6f9e" opacity="0.92" />
+
+            <!-- ==================== TRANSECT A (25 km long, 2 km top strip + blind spot + 2 km bottom strip) ==================== -->
+            <!-- Top Counting Strip A -->
+            <rect x="215" y="54" width="585" height="30" fill="#e6e2b8" opacity="0.78" />
+            <!-- Central Flight Path Corridor A -->
+            <rect x="215" y="84" width="585" height="16" fill="#635e46" opacity="0.85" />
+            <line x1="215" y1="92" x2="800" y2="92" stroke="#ffffff" stroke-width="2.2" stroke-dasharray="7,7" />
+            <!-- Bottom Counting Strip A -->
+            <rect x="215" y="100" width="585" height="30" fill="#e6e2b8" opacity="0.78" />
+            <text x="745" y="48" fill="#ffffff" font-size="12" font-weight="700" text-anchor="end">Transect A</text>
+
+            <!-- ==================== TRANSECT B (35 km long, 2 km top strip + blind spot + 2 km bottom strip) ==================== -->
+            <!-- Top Counting Strip B -->
+            <rect x="85" y="176" width="715" height="30" fill="#e6e2b8" opacity="0.78" />
+            <!-- Central Flight Path Corridor B -->
+            <rect x="85" y="206" width="715" height="16" fill="#635e46" opacity="0.85" />
+            <line x1="85" y1="214" x2="800" y2="214" stroke="#ffffff" stroke-width="2.2" stroke-dasharray="7,7" />
+            <!-- Bottom Counting Strip B -->
+            <rect x="85" y="222" width="715" height="30" fill="#e6e2b8" opacity="0.78" />
+            <text x="745" y="170" fill="#ffffff" font-size="12" font-weight="700" text-anchor="end">Transect B</text>
+
+            <!-- ==================== DIMENSION ARROWS & LABELS (Toggleable) ==================== -->
+            <g id="map-dimensions-layer" fill="#ffffff" stroke="#ffffff" font-size="11.5" font-weight="700">
+              <!-- Landscape Height: 12 Km (Far Left) -->
+              <line x1="14" y1="6" x2="14" y2="314" stroke-width="1.5" />
+              <polygon points="14,3 11,10 17,10" stroke="none" />
+              <polygon points="14,317 11,310 17,310" stroke="none" />
+              <text x="22" y="146" stroke="none">12 Km</text>
+
+              <!-- Landscape Width: 40 Km (Bottom) -->
+              <line x1="16" y1="308" x2="794" y2="308" stroke-width="1.5" />
+              <polygon points="13,308 20,305 20,311" stroke="none" />
+              <polygon points="797,308 790,305 790,311" stroke="none" />
+              <text x="415" y="302" stroke="none" text-anchor="middle">40 Km (Total Landscape Width)</text>
+
+              <!-- Transect A Strip Width: 2 Km -->
+              <line x1="208" y1="101" x2="208" y2="129" stroke-width="1.5" />
+              <polygon points="208,99 205,104 211,104" stroke="none" />
+              <polygon points="208,131 205,126 211,126" stroke="none" />
+              <text x="201" y="119" stroke="none" text-anchor="end">2 Km</text>
+
+              <!-- Transect A Length: 25 Km -->
+              <line x1="217" y1="138" x2="795" y2="138" stroke-width="1.5" />
+              <polygon points="214,138 220,135 220,141" stroke="none" />
+              <polygon points="798,138 792,135 792,141" stroke="none" />
+              <text x="505" y="151" stroke="none" text-anchor="middle">25 Km</text>
+
+              <!-- Transect B Strip Width: 2 Km -->
+              <line x1="78" y1="223" x2="78" y2="251" stroke-width="1.5" />
+              <polygon points="78,221 75,226 81,226" stroke="none" />
+              <polygon points="78,253 75,248 81,248" stroke="none" />
+              <text x="71" y="241" stroke="none" text-anchor="end">2 Km</text>
+
+              <!-- Transect B Length: 35 Km -->
+              <line x1="87" y1="260" x2="795" y2="260" stroke-width="1.5" />
+              <polygon points="84,260 90,257 90,263" stroke="none" />
+              <polygon points="798,260 792,257 792,263" stroke="none" />
+              <text x="440" y="273" stroke="none" text-anchor="middle">35 Km</text>
+            </g>
+
+            <!-- ==================== 15 INTERACTIVE ELEPHANTS ==================== -->
+            <!-- Group 1: 3 elephants North of Transect A (Outside) -->
+            <g class="elephant-marker" data-id="e1" data-zone="outside" transform="translate(292, 32)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+            <g class="elephant-marker" data-id="e2" data-zone="outside" transform="translate(318, 24)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+            <g class="elephant-marker" data-id="e3" data-zone="outside" transform="translate(328, 38)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+
+            <!-- Group 2: 2 elephants INSIDE Transect A Top Counting Strip -->
+            <g class="elephant-marker" data-id="e4" data-zone="stripA" transform="translate(476, 66)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+            <g class="elephant-marker" data-id="e5" data-zone="stripA" transform="translate(502, 72)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+
+            <!-- Group 3: 2 elephants ON Transect A Central Dashed Flight Path (Blind Spot -> Outside Strip Count) -->
+            <g class="elephant-marker" data-id="e6" data-zone="outside" transform="translate(502, 92)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+            <g class="elephant-marker" data-id="e7" data-zone="outside" transform="translate(530, 95)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+
+            <!-- Group 4: 1 elephant between Transect A & Transect B (Outside) -->
+            <g class="elephant-marker" data-id="e8" data-zone="outside" transform="translate(458, 160)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+
+            <!-- Group 5: 3 elephants INSIDE Transect B Top Counting Strip -->
+            <g class="elephant-marker" data-id="e9" data-zone="stripB" transform="translate(456, 190)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+            <g class="elephant-marker" data-id="e10" data-zone="stripB" transform="translate(495, 193)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+            <g class="elephant-marker" data-id="e11" data-zone="stripB" transform="translate(534, 195)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+
+            <!-- Group 6: 1 elephant INSIDE Transect B Bottom Counting Strip -->
+            <g class="elephant-marker" data-id="e12" data-zone="stripB" transform="translate(474, 237)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+
+            <!-- Group 7: 3 elephants South of Transect B (Outside) -->
+            <g class="elephant-marker" data-id="e13" data-zone="outside" transform="translate(326, 274)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+            <g class="elephant-marker" data-id="e14" data-zone="outside" transform="translate(485, 282)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+            <g class="elephant-marker" data-id="e15" data-zone="outside" transform="translate(608, 280)" onclick="toggleElephant(this)">
+              <circle r="17" fill="rgba(0,0,0,0)" class="tag-ring" />
+              <use href="#elephant-icon" fill="#111827" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Map Legend -->
+        <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-600">
+          <span class="inline-flex items-center gap-1.5"><span class="w-4 h-3 rounded bg-[#e6e2b8] border border-gray-400 inline-block"></span> Shaded Counting Strip (2 km wide each)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-4 h-3 rounded bg-[#635e46] border border-gray-400 inline-block"></span> Central Flight Path Blind Spot (Excluded from sample)</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Tagged Inside Strip</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Tagged Outside Strip</span>
+        </div>
+      </div>
+
+      <!-- Data Table 1: Landscape & Transect Dimensions (Slide 8) -->
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-forest-900">Data Table 1: Landscape &amp; Transect Measurements</h3>
+            <p class="text-xs sm:text-sm text-gray-600">
+              Remember: Each transect has <strong>two</strong> counting strips (2 km &times; 2 = <strong>4 km</strong> total width). Multiply Length &times; Width to calculate Area (km<sup>2</sup>).
+            </p>
+          </div>
+          <button
+            onclick="checkTable1()"
+            class="px-4 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition shrink-0 cursor-pointer"
+          >
+            Check Measurements
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-savanna-100 text-forest-900 border-b-2 border-savanna-300">
+                <th class="py-3 px-4 text-left font-bold">Area Name</th>
+                <th class="py-3 px-4 text-left font-bold">Length (km)</th>
+                <th class="py-3 px-4 text-left font-bold">Width (km)</th>
+                <th class="py-3 px-4 text-left font-bold">Area (km<sup>2</sup>)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-savanna-200">
+              <tr>
+                <td class="py-3 px-4 font-semibold text-forest-900">Transect A</td>
+                <td class="py-2.5 px-4"><input id="t1-a-len" type="number" step="any" placeholder="km" class="w-28 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+                <td class="py-2.5 px-4"><input id="t1-a-wid" type="number" step="any" placeholder="km" class="w-28 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+                <td class="py-2.5 px-4"><input id="t1-a-area" type="number" step="any" placeholder="km²" class="w-32 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-semibold text-forest-900">Transect B</td>
+                <td class="py-2.5 px-4"><input id="t1-b-len" type="number" step="any" placeholder="km" class="w-28 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+                <td class="py-2.5 px-4"><input id="t1-b-wid" type="number" step="any" placeholder="km" class="w-28 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+                <td class="py-2.5 px-4"><input id="t1-b-area" type="number" step="any" placeholder="km²" class="w-32 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+              </tr>
+              <tr class="bg-savanna-50/70">
+                <td class="py-3 px-4 font-semibold text-forest-900">Total Landscape</td>
+                <td class="py-2.5 px-4"><input id="t1-tot-len" type="number" step="any" placeholder="km" class="w-28 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+                <td class="py-2.5 px-4"><input id="t1-tot-wid" type="number" step="any" placeholder="km" class="w-28 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+                <td class="py-2.5 px-4"><input id="t1-tot-area" type="number" step="any" placeholder="km²" class="w-32 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="t1-feedback" class="hidden mt-4 rounded-xl p-3.5 text-xs sm:text-sm font-medium"></div>
+
+        <div class="mt-5 flex items-center justify-between">
+          <button onclick="switchTab(1)" class="px-4 py-2 rounded-xl border border-savanna-300 text-savanna-800 hover:bg-savanna-100 text-xs sm:text-sm font-semibold transition cursor-pointer">
+            &larr; Back to Briefing
+          </button>
+          <button onclick="switchTab(3)" class="px-5 py-2.5 rounded-xl bg-ochre-600 hover:bg-ochre-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
+            Proceed to Module 3: Density Calculations &rarr;
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- MODULE 3: DENSITY CALCULATIONS & SAMPLE VS. TOTAL COUNT             -->
+    <!-- =================================================================== -->
+    <section id="module-3" class="module-panel hidden space-y-6">
+      <!-- Formula Reference Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl border border-savanna-200 p-4 shadow-sm">
+          <div class="text-xs font-bold uppercase tracking-wider text-ochre-700">Step 1 &bull; Transect Density</div>
+          <div class="text-xs sm:text-sm font-bold text-forest-900 mt-2 flex items-center gap-2">
+            <span>Density =</span>
+            <span class="fraction">
+              <span class="fraction-num">Elephants in Counting Strips</span>
+              <span class="fraction-den">Area of Transect (km<sup>2</sup>)</span>
+            </span>
+          </div>
+          <p class="text-xs text-gray-600 mt-2">Units: elephants/km<sup>2</sup>. Only count elephants inside the shaded strips.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-savanna-200 p-4 shadow-sm">
+          <div class="text-xs font-bold uppercase tracking-wider text-ochre-700">Step 2 &bull; Average Density</div>
+          <div class="text-xs sm:text-sm font-bold text-forest-900 mt-2 flex items-center gap-2">
+            <span>Avg Density =</span>
+            <span class="fraction">
+              <span class="fraction-num">Transect A Density + Transect B Density</span>
+              <span class="fraction-den">2</span>
+            </span>
+          </div>
+          <p class="text-xs text-gray-600 mt-2">Averages the sampled strips to represent the broader savanna stratum.</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-savanna-200 p-4 shadow-sm">
+          <div class="text-xs font-bold uppercase tracking-wider text-ochre-700">Step 3 &bull; Population Estimate</div>
+          <div class="text-xs sm:text-sm font-bold text-forest-900 mt-2">
+            Sample Estimate = Avg Density &times; Total Landscape Area
+          </div>
+          <p class="text-xs text-gray-600 mt-2">Multiply average density by total landscape area and round to the nearest whole elephant.</p>
+        </div>
+      </div>
+
+      <!-- Data Table 2 & Extrapolation Inputs -->
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-forest-900">Data Table 2: Elephant Densities &amp; Population Estimate</h2>
+            <p class="text-xs sm:text-sm text-gray-600">Use your calculated areas from Data Table 1 and your counting-strip elephant counts from the aerial map.</p>
+          </div>
+          <button
+            onclick="checkModule3()"
+            class="px-4 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition shrink-0 cursor-pointer"
+          >
+            Validate Calculations
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-savanna-100 text-forest-900 border-b-2 border-savanna-300">
+                <th class="py-3 px-4 text-left font-bold">Transect</th>
+                <th class="py-3 px-4 text-left font-bold">Elephants Spotted in Counting Strips</th>
+                <th class="py-3 px-4 text-left font-bold">Transect Area (km<sup>2</sup>) <span class="block text-[11px] font-normal text-savanna-700">Synced from Part 2</span></th>
+                <th class="py-3 px-4 text-left font-bold">
+                  <div class="flex flex-col gap-1">
+                    <span>Elephant Density (elephants/km<sup>2</sup>)</span>
+                    <span class="fraction text-xs font-semibold text-savanna-800 self-start">
+                      <span class="fraction-num">Number of Elephants</span>
+                      <span class="fraction-den">Area of Transect (km<sup>2</sup>)</span>
+                    </span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-savanna-200">
+              <tr>
+                <td class="py-3 px-4 font-semibold text-forest-900">Transect A</td>
+                <td class="py-2.5 px-4"><input id="m3-a-count" type="number" step="1" placeholder="count" oninput="this.dataset.manual='true'" class="w-32 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+                <td class="py-3 px-4 font-semibold text-forest-900"><span id="m3-a-area-display" class="text-savanna-700 font-medium">&mdash; (enter in Part 2)</span></td>
+                <td class="py-2.5 px-4"><input id="m3-a-dens" type="number" step="any" placeholder="elephants/km²" class="w-36 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-semibold text-forest-900">Transect B</td>
+                <td class="py-2.5 px-4"><input id="m3-b-count" type="number" step="1" placeholder="count" oninput="this.dataset.manual='true'" class="w-32 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+                <td class="py-3 px-4 font-semibold text-forest-900"><span id="m3-b-area-display" class="text-savanna-700 font-medium">&mdash; (enter in Part 2)</span></td>
+                <td class="py-2.5 px-4"><input id="m3-b-dens" type="number" step="any" placeholder="elephants/km²" class="w-36 rounded-lg border border-savanna-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-forest-800" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Summary Calculation Boxes -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div class="rounded-xl bg-savanna-50 border border-savanna-200 p-4">
+            <label for="m3-avg-dens" class="block text-xs font-bold uppercase text-savanna-800 mb-1">
+              Step 1: Average Transect Density (elephants/km<sup>2</sup>)
+            </label>
+            <p class="text-[11px] text-gray-600 mb-2">Add Transect A + B densities and divide by 2.</p>
+            <input id="m3-avg-dens" type="number" step="any" placeholder="elephants/km²" class="w-full rounded-lg border border-savanna-300 bg-white px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-forest-800" />
+          </div>
+          <div class="rounded-xl bg-forest-50 border border-forest-800/25 p-4">
+            <label for="m3-sample-est" class="block text-xs font-bold uppercase text-forest-900 mb-1">
+              Step 2: Estimate Total Landscape Population
+            </label>
+            <p class="text-[11px] text-forest-900 mb-2">
+              Avg Density &times; Total Landscape Area (<span id="m3-tot-area-display" class="font-bold text-savanna-700">&mdash; (enter in Part 2)</span>)
+            </p>
+            <input id="m3-sample-est" type="number" step="any" placeholder="Estimated elephants" class="w-full rounded-lg border border-forest-700/40 bg-white px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-forest-800" />
+          </div>
+          <div class="rounded-xl bg-ochre-100/60 border border-ochre-500/40 p-4">
+            <label for="m3-total-count" class="block text-xs font-bold uppercase text-ochre-700 mb-1">
+              Step 3: Actual Total Count (Entire Landscape)
+            </label>
+            <p class="text-[11px] text-gray-700 mb-2">Synced from total tagged elephants on Part 2 map.</p>
+            <input id="m3-total-count" type="number" step="1" placeholder="All elephants in landscape" oninput="this.dataset.manual='true'" class="w-full rounded-lg border border-ochre-500/50 bg-white px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ochre-600" />
+          </div>
+        </div>
+
+        <div id="m3-feedback" class="hidden rounded-xl p-3.5 text-xs sm:text-sm font-medium"></div>
+
+        <!-- Methodological Reflection Prompt -->
+        <div class="rounded-xl bg-savanna-50 border border-savanna-200 p-4 space-y-2">
+          <label for="m3-reflection" class="block text-sm font-bold text-forest-900">
+            Scientific Reasoning: Compare your estimated elephant population from the sample count to your actual total count across the entire landscape. How close was the sample estimate to the actual count, and what issues might researchers encounter during real aerial sample counts (and how could they address them)?
+          </label>
+          <textarea
+            id="m3-reflection"
+            rows="3"
+            placeholder="Write your comparison and evaluation of aerial survey limitations..."
+            class="w-full rounded-xl border border-savanna-300 bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <button onclick="switchTab(2)" class="px-4 py-2 rounded-xl border border-savanna-300 text-savanna-800 hover:bg-savanna-100 text-xs sm:text-sm font-semibold transition cursor-pointer">
+            &larr; Back to Map
+          </button>
+          <button onclick="switchTab(4)" class="px-5 py-2.5 rounded-xl bg-ochre-600 hover:bg-ochre-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
+            Proceed to Module 4: Regional Census Data &rarr;
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- MODULE 4: REGIONAL DATA INVESTIGATION (Option 3, Chase et al. 2016) -->
+    <!-- =================================================================== -->
+    <section id="module-4" class="module-panel hidden space-y-6">
+      <!-- Carcass Ratio Explainer Header -->
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-ochre-700">Module 4 &bull; Real-World Data Analysis (Chase et al., 2016)</span>
+            <h2 class="text-xl font-bold text-forest-900">The Great Elephant Census: Regional Stability &amp; Change</h2>
+            <p class="text-xs sm:text-sm text-gray-600 max-w-3xl">
+              During the Great Elephant Census across 18 African countries, aerial observers counted both <strong>live elephants</strong> and <strong>elephant carcasses</strong> along transects. Scientists use the <strong>Carcass Ratio</strong> to determine whether a population is stable or shrinking.
+            </p>
+          </div>
+          <div class="rounded-xl bg-forest-900 text-white px-4 py-3 shrink-0">
+            <div class="text-[11px] uppercase tracking-wider text-ochre-500 font-bold">Carcass Ratio Formula</div>
+            <div class="text-xs sm:text-sm font-bold mt-1 flex items-center gap-2">
+              <span>Carcass Ratio =</span>
+              <span class="fraction">
+                <span class="fraction-num">Dead</span>
+                <span class="fraction-den">Live + Dead</span>
+              </span>
+              <span>&times; 100%</span>
+            </div>
+            <div class="text-xs text-forest-100 mt-1.5">
+              Threshold: <strong>&gt; 8%</strong> indicates a <strong>declining</strong> population.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Visual Comparator Chart -->
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-forest-900">Interactive Regional Census Chart (2014–2016)</h3>
+            <p class="text-xs text-gray-600">Toggle between Carcass Ratio (%) and Live Elephant Population across 6 surveyed countries.</p>
+          </div>
+          <div class="inline-flex rounded-xl bg-savanna-100 p-1 border border-savanna-200 self-start">
+            <button
+              id="chart-mode-carcass"
+              onclick="renderRegionalChart('carcass')"
+              class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-forest-900 text-white shadow-sm transition cursor-pointer"
+            >
+              Carcass Ratio (%)
+            </button>
+            <button
+              id="chart-mode-live"
+              onclick="renderRegionalChart('live')"
+              class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-savanna-800 hover:text-forest-900 transition cursor-pointer"
+            >
+              Live Elephants
+            </button>
+          </div>
+        </div>
+
+        <div id="regional-chart-container" class="space-y-3 pt-2">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- Data Table & Interactive Population Trend Classification -->
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-forest-900">Regional Dataset &amp; Stability Classification</h3>
+            <p class="text-xs sm:text-sm text-gray-600">
+              Use the <strong>8% Carcass Ratio rule</strong> (&le; 8% = Growing/Stable; &gt; 8% = Shrinking/Declining) to classify each country's population trend.
+            </p>
+          </div>
+          <button
+            onclick="checkModule4Classifications()"
+            class="px-4 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition shrink-0 cursor-pointer"
+          >
+            Check Classifications
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs sm:text-sm border-collapse">
+            <thead>
+              <tr class="bg-savanna-100 text-forest-900 border-b-2 border-savanna-300">
+                <th class="py-3 px-4 text-left font-bold">Country / Region</th>
+                <th class="py-3 px-4 text-left font-bold">Live Elephant Estimate</th>
+                <th class="py-3 px-4 text-left font-bold">Carcass Ratio</th>
+                <th class="py-3 px-4 text-left font-bold">Observed Population Trend</th>
+              </tr>
+            </thead>
+            <tbody id="regional-table-body" class="divide-y divide-savanna-200">
+              <!-- Populated dynamically by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="m4-feedback" class="hidden mt-4 rounded-xl p-3.5 text-xs sm:text-sm font-medium"></div>
+      </div>
+
+      <!-- Analysis & CER Prompts -->
+      <div class="bg-white rounded-2xl border border-savanna-200 p-5 sm:p-6 shadow-sm space-y-5">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-ochre-700">Constructing Explanations</span>
+          <h3 class="text-lg font-bold text-forest-900 mt-0.5">Biotic &amp; Abiotic Factors Driving Stability and Change</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="rounded-xl bg-savanna-50 border border-savanna-200 p-4 space-y-2">
+            <label for="m4-cer-1" class="block text-sm font-bold text-forest-900">
+              1. Compare Uganda (0.5% carcass ratio; rebounded from &lt;800 to 4,864) and Mozambique (32.0% carcass ratio; ~10,800 remaining): What biotic and human factors explain this sharp contrast in population stability?
+            </label>
+            <textarea
+              id="m4-cer-1"
+              rows="4"
+              placeholder="Cite evidence from the dataset and explain how poaching, anti-poaching enforcement, and habitat protection alter elephant mortality and carrying capacity..."
+              class="w-full rounded-xl border border-savanna-300 bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800"
+            ></textarea>
+          </div>
+
+          <div class="rounded-xl bg-savanna-50 border border-savanna-200 p-4 space-y-2">
+            <label for="m4-cer-2" class="block text-sm font-bold text-forest-900">
+              2. Examine Zimbabwe's data: Zimbabwe holds 82,304 elephants (the largest group in this table) with an 8.0% overall carcass ratio, yet experienced a 74% collapse in the Sebungwe region. Why is looking at regional sub-populations (strata) critical for conservation?
+            </label>
+            <textarea
+              id="m4-cer-2"
+              rows="4"
+              placeholder="Explain how a large overall population number can mask severe localized declines..."
+              class="w-full rounded-xl border border-savanna-300 bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-savanna-200">
+          <button onclick="switchTab(3)" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-savanna-300 text-savanna-800 hover:bg-savanna-100 text-xs sm:text-sm font-semibold transition cursor-pointer">
+            &larr; Back to Density Calculations
+          </button>
+          <button
+            onclick="openReportModal()"
+            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-sm font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg class="w-5 h-5 text-ochre-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <span>View &amp; Print Complete Lab Report</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-savanna-100 border-t border-savanna-200 py-4 px-4 text-center text-xs text-savanna-700 no-print">
+    Data Source: The Great Elephant Census (Chase et al., 2016, <em>PeerJ</em> / Elephants Without Borders)
+  </footer>
+
+  <!-- =================================================================== -->
+  <!-- PRINTABLE STUDENT LAB REPORT MODAL                                  -->
+  <!-- =================================================================== -->
+  <div id="print-report-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div id="print-report-content" class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-savanna-300 p-6 sm:p-8 space-y-6">
+      <div class="flex items-start justify-between border-b-2 border-forest-900 pb-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-ochre-700">Lab Summary</span>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-forest-900">The Great Elephant Census: Field Investigation Report</h2>
+          <p class="text-sm text-gray-700 mt-1">
+            <strong>Student:</strong> <span id="rep-student-name">______________________</span> &nbsp;&bull;&nbsp;
+            <strong>Date:</strong> <span id="rep-date"></span>
+          </p>
+        </div>
+        <div class="flex items-center gap-2 no-print">
+          <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold shadow transition cursor-pointer">
+            Print / Save PDF
+          </button>
+          <button onclick="closeReportModal()" class="px-3 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold transition cursor-pointer">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <!-- Report Section 1: Table 1 & Table 2 Summary -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-forest-900">Part I: Aerial Transect Measurements &amp; Population Estimates</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div class="border border-gray-300 rounded-xl p-3">
+            <div class="font-bold text-forest-900 mb-1.5">Landscape &amp; Transect Areas</div>
+            <ul class="space-y-1 text-gray-700" id="rep-table1-list"></ul>
+          </div>
+          <div class="border border-gray-300 rounded-xl p-3">
+            <div class="font-bold text-forest-900 mb-1.5">Densities &amp; Sample vs. Total Count</div>
+            <ul class="space-y-1 text-gray-700" id="rep-table2-list"></ul>
+          </div>
+        </div>
+        <div class="border border-gray-300 rounded-xl p-3 text-xs">
+          <div class="font-bold text-forest-900 mb-1">Aerial Survey Reflection (Sample vs. Total Count):</div>
+          <p id="rep-m3-reflection" class="text-gray-700 whitespace-pre-line italic">No response entered.</p>
+        </div>
+      </div>
+
+      <!-- Report Section 2: Regional Data Classifications & CER -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-forest-900">Part II: Regional Census Classifications (Chase et al., 2016)</h3>
+        <div class="border border-gray-300 rounded-xl p-3 text-xs">
+          <div id="rep-m4-classifications" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-gray-700"></div>
+        </div>
+        <div class="border border-gray-300 rounded-xl p-3 text-xs space-y-2">
+          <div>
+            <div class="font-bold text-forest-900">1. Uganda vs. Mozambique Biotic/Human Factors Analysis:</div>
+            <p id="rep-m4-cer1" class="text-gray-700 whitespace-pre-line italic mt-0.5">No response entered.</p>
+          </div>
+          <div class="pt-2 border-t border-gray-200">
+            <div class="font-bold text-forest-900">2. Zimbabwe Sub-Population (Sebungwe) Strata Analysis:</div>
+            <p id="rep-m4-cer2" class="text-gray-700 whitespace-pre-line italic mt-0.5">No response entered.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimal KaTeX auto-render fallback / clean math formatting script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initRegionalModule();
+      renderRegionalChart('carcass');
+      ['t1-a-area', 't1-b-area', 't1-tot-area'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', syncPart2DataToPart3);
+      });
+      syncPart2DataToPart3();
+    });
+
+    // ==================== NAVIGATION TABS ====================
+    function switchTab(tabNum) {
+      document.querySelectorAll('.module-panel').forEach((panel, idx) => {
+        panel.classList.toggle('hidden', idx + 1 !== tabNum);
+      });
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        const active = idx + 1 === tabNum;
+        if (active) {
+          btn.className = 'tab-btn flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs sm:text-sm font-semibold transition bg-white text-forest-900 shadow cursor-pointer';
+        } else {
+          btn.className = 'tab-btn flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs sm:text-sm font-semibold transition text-forest-100 hover:bg-forest-800/60 cursor-pointer';
+        }
+      });
+      if (tabNum === 3) {
+        syncPart2DataToPart3();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ==================== MODULE 1 CHECK ====================
+    function checkModule1() {
+      const q1 = document.getElementById('m1-q1').value;
+      const q2 = document.getElementById('m1-q2').value;
+      const fb1 = document.getElementById('m1-q1-fb');
+      const fb2 = document.getElementById('m1-q2-fb');
+
+      fb1.classList.remove('hidden');
+      if (q1 === 'b') {
+        fb1.textContent = 'Correct! Aerial strip transects allow scientists to sample representative strata and estimate continental populations efficiently.';
+        fb1.className = 'text-xs mt-2 font-semibold text-emerald-700';
+      } else {
+        fb1.textContent = 'Not quite—review how Sample Counts use strip density to estimate populations across huge areas.';
+        fb1.className = 'text-xs mt-2 font-semibold text-amber-700';
+      }
+
+      fb2.classList.remove('hidden');
+      if (q2 === 'a') {
+        fb2.textContent = 'Correct! Observers only count elephants inside the calibrated counting strips on each side of the plane.';
+        fb2.className = 'text-xs mt-2 font-semibold text-emerald-700';
+      } else {
+        fb2.textContent = 'Try again—counting strips have a fixed width on either side of the flight line so area can be calculated.';
+        fb2.className = 'text-xs mt-2 font-semibold text-amber-700';
+      }
+
+      const badge = document.getElementById('badge-1');
+      if (q1 === 'b' && q2 === 'a') {
+        badge.textContent = 'Done';
+        badge.className = 'ml-2 px-2 py-0.5 text-[11px] rounded-full bg-emerald-600 text-white';
+      }
+    }
+
+    // ==================== MODULE 2: INTERACTIVE MAP & TABLE 1 ====================
+    const taggedElephants = new Set();
+    let dimsVisible = true;
+
+    function toggleElephant(el) {
+      const id = el.getAttribute('data-id');
+      const zone = el.getAttribute('data-zone');
+      const ring = el.querySelector('.tag-ring');
+      const icon = el.querySelector('use');
+
+      if (taggedElephants.has(id)) {
+        taggedElephants.delete(id);
+        ring.setAttribute('fill', 'transparent');
+        ring.setAttribute('stroke', 'none');
+        icon.setAttribute('fill', '#111827');
+      } else {
+        taggedElephants.add(id);
+        if (zone === 'stripA' || zone === 'stripB') {
+          ring.setAttribute('fill', 'rgba(16, 185, 129, 0.35)');
+          ring.setAttribute('stroke', '#059669');
+          ring.setAttribute('stroke-width', '2');
+          icon.setAttribute('fill', '#064e3b');
+        } else {
+          ring.setAttribute('fill', 'rgba(245, 158, 11, 0.35)');
+          ring.setAttribute('stroke', '#d97706');
+          ring.setAttribute('stroke-width', '2');
+          icon.setAttribute('fill', '#78350f');
+        }
+      }
+      updateTagCounters();
+    }
+
+    function updateTagCounters() {
+      let stripA = 0, stripB = 0, outside = 0;
+      taggedElephants.forEach((id) => {
+        const el = document.querySelector(`.elephant-marker[data-id="${id}"]`);
+        const zone = el.getAttribute('data-zone');
+        if (zone === 'stripA') stripA++;
+        else if (zone === 'stripB') stripB++;
+        else outside++;
+      });
+      document.getElementById('count-strip-a').textContent = stripA;
+      document.getElementById('count-strip-b').textContent = stripB;
+      document.getElementById('count-outside').textContent = outside;
+      document.getElementById('count-total-map').textContent = taggedElephants.size;
+
+      // Sync tagged counts into Part 3 unless manually overridden by student
+      const m3ACount = document.getElementById('m3-a-count');
+      const m3BCount = document.getElementById('m3-b-count');
+      const m3TotCount = document.getElementById('m3-total-count');
+      if (m3ACount && m3ACount.dataset.manual !== 'true') {
+        m3ACount.value = stripA > 0 ? stripA : '';
+      }
+      if (m3BCount && m3BCount.dataset.manual !== 'true') {
+        m3BCount.value = stripB > 0 ? stripB : '';
+      }
+      if (m3TotCount && m3TotCount.dataset.manual !== 'true') {
+        m3TotCount.value = taggedElephants.size > 0 ? taggedElephants.size : '';
+      }
+    }
+
+    function syncPart2DataToPart3() {
+      const areaA = document.getElementById('t1-a-area').value.trim();
+      const areaB = document.getElementById('t1-b-area').value.trim();
+      const areaTot = document.getElementById('t1-tot-area').value.trim();
+
+      const dispA = document.getElementById('m3-a-area-display');
+      const dispB = document.getElementById('m3-b-area-display');
+      const dispTot = document.getElementById('m3-tot-area-display');
+
+      if (dispA) {
+        dispA.innerHTML = areaA !== '' ? `<span class="text-forest-900 font-bold">${areaA} km<sup>2</sup></span>` : '&mdash; (enter in Part 2)';
+      }
+      if (dispB) {
+        dispB.innerHTML = areaB !== '' ? `<span class="text-forest-900 font-bold">${areaB} km<sup>2</sup></span>` : '&mdash; (enter in Part 2)';
+      }
+      if (dispTot) {
+        dispTot.innerHTML = areaTot !== '' ? `<span class="text-forest-900 font-bold">${areaTot} km<sup>2</sup></span>` : '&mdash; (enter in Part 2)';
+      }
+    }
+
+    function resetElephantTags() {
+      taggedElephants.clear();
+      document.querySelectorAll('.elephant-marker').forEach((el) => {
+        el.querySelector('.tag-ring').setAttribute('fill', 'transparent');
+        el.querySelector('.tag-ring').setAttribute('stroke', 'none');
+        el.querySelector('use').setAttribute('fill', '#111827');
+      });
+      ['m3-a-count', 'm3-b-count', 'm3-total-count'].forEach((id) => {
+        const input = document.getElementById(id);
+        if (input) {
+          delete input.dataset.manual;
+          input.value = '';
+        }
+      });
+      updateTagCounters();
+    }
+
+    function toggleMapDimensions() {
+      dimsVisible = !dimsVisible;
+      const layer = document.getElementById('map-dimensions-layer');
+      const btn = document.getElementById('toggle-dims-btn');
+      layer.style.display = dimsVisible ? 'inline' : 'none';
+      btn.textContent = dimsVisible ? 'Hide Dimensions' : 'Show Dimensions';
+    }
+
+    function toggleBlindSpotInfo() {
+      document.getElementById('blindspot-callout').classList.toggle('hidden');
+    }
+
+    function checkTable1() {
+      const checks = [
+        { id: 't1-a-len', expected: 25 },
+        { id: 't1-a-wid', expected: 4 },
+        { id: 't1-a-area', expected: 100 },
+        { id: 't1-b-len', expected: 35 },
+        { id: 't1-b-wid', expected: 4 },
+        { id: 't1-b-area', expected: 140 },
+        { id: 't1-tot-len', expected: 40 },
+        { id: 't1-tot-wid', expected: 12 },
+        { id: 't1-tot-area', expected: 480 }
+      ];
+
+      let correctCount = 0;
+      checks.forEach((item) => {
+        const input = document.getElementById(item.id);
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && Math.abs(val - item.expected) < 0.01) {
+          correctCount++;
+          input.classList.remove('border-red-400', 'bg-red-50');
+          input.classList.add('border-emerald-500', 'bg-emerald-50');
+        } else {
+          input.classList.remove('border-emerald-500', 'bg-emerald-50');
+          input.classList.add('border-red-400', 'bg-red-50');
+        }
+      });
+
+      const badge = document.getElementById('badge-2');
+      badge.textContent = `${correctCount}/9`;
+      if (correctCount === 9) {
+        badge.className = 'ml-2 px-2 py-0.5 text-[11px] rounded-full bg-emerald-600 text-white';
+      }
+
+      const fb = document.getElementById('t1-feedback');
+      fb.classList.remove('hidden');
+      if (correctCount === 9) {
+        fb.className = 'mt-4 rounded-xl p-3.5 text-xs sm:text-sm font-semibold bg-emerald-50 border border-emerald-300 text-emerald-800';
+        fb.textContent = 'All 9 measurements are accurate! Transect A = 100 km², Transect B = 140 km², and Total Landscape = 480 km².';
+      } else {
+        fb.className = 'mt-4 rounded-xl p-3.5 text-xs sm:text-sm font-semibold bg-amber-50 border border-amber-300 text-amber-800';
+        fb.textContent = `You got ${correctCount} of 9 fields correct. Hint: Each transect has TWO 2-km counting strips (Width = 4 km), and Area = Length × Width.`;
+      }
+    }
+
+    // ==================== MODULE 3: DENSITY & EXTRAPOLATION ====================
+    function checkModule3() {
+      const specs = [
+        { id: 'm3-a-count', min: 2, max: 2 },
+        { id: 'm3-a-dens', min: 0.019, max: 0.021 },
+        { id: 'm3-b-count', min: 4, max: 4 },
+        { id: 'm3-b-dens', min: 0.028, max: 0.029 },
+        { id: 'm3-avg-dens', min: 0.0235, max: 0.0245 },
+        { id: 'm3-sample-est', min: 11.4, max: 12.1 }
+      ];
+
+      let correct = 0;
+      specs.forEach((s) => {
+        const el = document.getElementById(s.id);
+        const v = parseFloat(el.value);
+        if (!isNaN(v) && v >= s.min && v <= s.max) {
+          correct++;
+          el.classList.remove('border-red-400', 'bg-red-50');
+          el.classList.add('border-emerald-500', 'bg-emerald-50');
+        } else {
+          el.classList.remove('border-emerald-500', 'bg-emerald-50');
+          el.classList.add('border-red-400', 'bg-red-50');
+        }
+      });
+
+      const totEl = document.getElementById('m3-total-count');
+      const totVal = parseFloat(totEl.value);
+      const totOk = !isNaN(totVal) && totVal === 15;
+      if (totOk) {
+        totEl.classList.remove('border-red-400', 'bg-red-50');
+        totEl.classList.add('border-emerald-500', 'bg-emerald-50');
+      } else {
+        totEl.classList.remove('border-emerald-500', 'bg-emerald-50');
+        totEl.classList.add('border-red-400', 'bg-red-50');
+      }
+
+      const badge = document.getElementById('badge-3');
+      badge.textContent = `${correct}/6`;
+      if (correct === 6 && totOk) {
+        badge.className = 'ml-2 px-2 py-0.5 text-[11px] rounded-full bg-emerald-600 text-white';
+      }
+
+      const fb = document.getElementById('m3-feedback');
+      fb.classList.remove('hidden');
+      if (correct === 6 && totOk) {
+        fb.className = 'rounded-xl p-3.5 text-xs sm:text-sm font-semibold bg-emerald-50 border border-emerald-300 text-emerald-800';
+        fb.textContent = 'Excellent work! Transect A density = 0.02 elephants/km², Transect B density = 0.0286 elephants/km², Average Density = 0.024 elephants/km², Sample Estimate = 12 elephants, and Total Map Count = 15 elephants.';
+      } else {
+        fb.className = 'rounded-xl p-3.5 text-xs sm:text-sm font-semibold bg-amber-50 border border-amber-300 text-amber-800';
+        fb.textContent = `Check highlighted fields (${correct}/6 sample fields + ${totOk ? '1' : '0'}/1 total count verified). Remember: Transect A has 2 elephants inside strips (the 2 on the dashed line are in the blind spot), and Transect B has 4 elephants inside strips.`;
+      }
+    }
+
+    // ==================== MODULE 4: REGIONAL DATA (Chase et al. 2016) ====================
+    const regionalData = [
+      {
+        id: 'uganda',
+        country: 'Uganda',
+        live: 4864,
+        liveDisplay: '4,864',
+        carcass: 0.5,
+        notes: 'Increasing (rebounded from <800 in the 1970s–80s)',
+        expectedStatus: 'stable'
+      },
+      {
+        id: 'malawi',
+        country: 'Malawi',
+        live: 817,
+        liveDisplay: '817',
+        carcass: 2.0,
+        notes: 'Increasing in two protected parks',
+        expectedStatus: 'stable'
+      },
+      {
+        id: 'zimbabwe',
+        country: 'Zimbabwe (Overall)',
+        live: 82304,
+        liveDisplay: '82,304',
+        carcass: 8.0,
+        notes: 'Down 6% overall (down 74% in the Sebungwe region)',
+        expectedStatus: 'stable'
+      },
+      {
+        id: 'kenya',
+        country: 'Kenya',
+        live: 25959,
+        liveDisplay: '25,959',
+        carcass: 13.0,
+        notes: 'Relatively stable overall, but elevated carcass ratio (>8%)',
+        expectedStatus: 'declining'
+      },
+      {
+        id: 'mozambique',
+        country: 'Mozambique',
+        live: 10800,
+        liveDisplay: '~10,800',
+        carcass: 32.0,
+        notes: 'Declining rapidly due to heavy poaching',
+        expectedStatus: 'declining'
+      },
+      {
+        id: 'cameroon',
+        country: 'Cameroon (Savanna)',
+        live: 150,
+        liveDisplay: '~150',
+        carcass: 83.0,
+        notes: 'Severe population collapse',
+        expectedStatus: 'declining'
+      }
+    ];
+
+    function initRegionalModule() {
+      const tbody = document.getElementById('regional-table-body');
+      tbody.innerHTML = regionalData
+        .map(
+          (row) => `
+          <tr>
+            <td class="py-3 px-4 font-bold text-forest-900">${row.country}</td>
+            <td class="py-3 px-4 font-medium text-gray-800">${row.liveDisplay}</td>
+            <td class="py-3 px-4">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                row.carcass <= 8 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+              }">${row.carcass.toFixed(1)}%</span>
+            </td>
+            <td class="py-2.5 px-4">
+              <select id="class-${row.id}" class="rounded-lg border border-savanna-300 bg-white px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-forest-800">
+                <option value="">-- Classify Trend --</option>
+                <option value="stable">Growing / Stable (&le; 8%)</option>
+                <option value="declining">Shrinking / Declining (&gt; 8%)</option>
+              </select>
+            </td>
+          </tr>
+        `
+        )
+        .join('');
+    }
+
+    function renderRegionalChart(mode) {
+      const btnCarcass = document.getElementById('chart-mode-carcass');
+      const btnLive = document.getElementById('chart-mode-live');
+      const container = document.getElementById('regional-chart-container');
+
+      if (mode === 'carcass') {
+        btnCarcass.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-forest-900 text-white shadow-sm transition cursor-pointer';
+        btnLive.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-savanna-800 hover:text-forest-900 transition cursor-pointer';
+
+        container.innerHTML = `
+          <div class="text-xs text-gray-500 mb-2 flex items-center justify-between">
+            <span>Bar Length = Carcass Ratio (%) &bull; Dashed vertical marker = <strong>8% Stability Threshold</strong></span>
+          </div>
+          ${regionalData
+            .map((d) => {
+              const barColor = d.carcass <= 8 ? 'bg-emerald-600' : d.carcass < 25 ? 'bg-amber-500' : 'bg-red-600';
+              const widthPct = Math.max(2, d.carcass);
+              return `
+                <div class="grid grid-cols-12 items-center gap-2 text-xs">
+                  <div class="col-span-4 sm:col-span-3 font-semibold text-forest-900 truncate">${d.country}</div>
+                  <div class="col-span-6 sm:col-span-7 relative h-6 bg-savanna-100 rounded-lg overflow-hidden border border-savanna-200">
+                    <div class="h-full ${barColor} rounded-r-lg transition-all duration-500" style="width: ${widthPct}%"></div>
+                    <!-- 8% Threshold Line -->
+                    <div class="absolute top-0 bottom-0 border-l-2 border-dashed border-forest-950" style="left: 8%" title="8% Stability Threshold"></div>
+                  </div>
+                  <div class="col-span-2 text-right font-bold text-gray-800">${d.carcass.toFixed(1)}%</div>
+                </div>
+              `;
+            })
+            .join('')}
+        `;
+      } else {
+        btnLive.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-forest-900 text-white shadow-sm transition cursor-pointer';
+        btnCarcass.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-savanna-800 hover:text-forest-900 transition cursor-pointer';
+
+        const maxLive = 82304;
+        container.innerHTML = `
+          <div class="text-xs text-gray-500 mb-2">
+            Bar Length = Estimated Live Savanna Elephants (Chase et al., 2016)
+          </div>
+          ${regionalData
+            .map((d) => {
+              const widthPct = Math.max(1.5, (d.live / maxLive) * 100);
+              return `
+                <div class="grid grid-cols-12 items-center gap-2 text-xs">
+                  <div class="col-span-4 sm:col-span-3 font-semibold text-forest-900 truncate">${d.country}</div>
+                  <div class="col-span-6 sm:col-span-7 h-6 bg-savanna-100 rounded-lg overflow-hidden border border-savanna-200">
+                    <div class="h-full bg-forest-800 rounded-r-lg transition-all duration-500" style="width: ${widthPct}%"></div>
+                  </div>
+                  <div class="col-span-2 text-right font-bold text-gray-800">${d.liveDisplay}</div>
+                </div>
+              `;
+            })
+            .join('')}
+        `;
+      }
+    }
+
+    function checkModule4Classifications() {
+      let correct = 0;
+      regionalData.forEach((row) => {
+        const sel = document.getElementById(`class-${row.id}`);
+        if (sel.value === row.expectedStatus) {
+          correct++;
+          sel.classList.remove('border-red-400', 'bg-red-50');
+          sel.classList.add('border-emerald-500', 'bg-emerald-50');
+        } else {
+          sel.classList.remove('border-emerald-500', 'bg-emerald-50');
+          sel.classList.add('border-red-400', 'bg-red-50');
+        }
+      });
+
+      const badge = document.getElementById('badge-4');
+      badge.textContent = `${correct}/6`;
+      if (correct === 6) {
+        badge.className = 'ml-2 px-2 py-0.5 text-[11px] rounded-full bg-emerald-600 text-white';
+      }
+
+      const fb = document.getElementById('m4-feedback');
+      fb.classList.remove('hidden');
+      if (correct === 6) {
+        fb.className = 'mt-4 rounded-xl p-3.5 text-xs sm:text-sm font-semibold bg-emerald-50 border border-emerald-300 text-emerald-800';
+        fb.textContent = 'All 6 countries classified accurately! Notice how Uganda, Malawi, and Zimbabwe (overall) sit at or below the 8% threshold, while Kenya, Mozambique, and Cameroon exceed 8%.';
+      } else {
+        fb.className = 'mt-4 rounded-xl p-3.5 text-xs sm:text-sm font-semibold bg-amber-50 border border-amber-300 text-amber-800';
+        fb.textContent = `You classified ${correct} of 6 countries correctly. Remember: Carcass ratios ≤ 8% indicate Growing/Stable populations, while ratios > 8% indicate Shrinking/Declining populations.`;
+      }
+    }
+
+    // ==================== LAB REPORT MODAL ====================
+    function openReportModal() {
+      const studentName = document.getElementById('student-name').value.trim();
+      document.getElementById('rep-student-name').textContent = studentName || '______________________';
+      document.getElementById('rep-date').textContent = new Date().toLocaleDateString();
+
+      // Table 1 Summary
+      const t1List = document.getElementById('rep-table1-list');
+      t1List.innerHTML = `
+        <li><strong>Transect A:</strong> L = ${valOrDash('t1-a-len')} km, W = ${valOrDash('t1-a-wid')} km, Area = ${valOrDash('t1-a-area')} km<sup>2</sup></li>
+        <li><strong>Transect B:</strong> L = ${valOrDash('t1-b-len')} km, W = ${valOrDash('t1-b-wid')} km, Area = ${valOrDash('t1-b-area')} km<sup>2</sup></li>
+        <li><strong>Total Landscape:</strong> L = ${valOrDash('t1-tot-len')} km, W = ${valOrDash('t1-tot-wid')} km, Area = ${valOrDash('t1-tot-area')} km<sup>2</sup></li>
+      `;
+
+      // Table 2 Summary
+      const t2List = document.getElementById('rep-table2-list');
+      t2List.innerHTML = `
+        <li><strong>Transect A:</strong> ${valOrDash('m3-a-count')} elephants &rarr; ${valOrDash('m3-a-dens')} elephants/km<sup>2</sup></li>
+        <li><strong>Transect B:</strong> ${valOrDash('m3-b-count')} elephants &rarr; ${valOrDash('m3-b-dens')} elephants/km<sup>2</sup></li>
+        <li><strong>Average Density:</strong> ${valOrDash('m3-avg-dens')} elephants/km<sup>2</sup></li>
+        <li><strong>Sample Estimate:</strong> ${valOrDash('m3-sample-est')} elephants &nbsp;|&nbsp; <strong>Total Count:</strong> ${valOrDash('m3-total-count')} elephants</li>
+      `;
+
+      // Reflections
+      const m3Ref = document.getElementById('m3-reflection').value.trim();
+      document.getElementById('rep-m3-reflection').textContent = m3Ref || 'No response entered.';
+
+      // Module 4 Classifications
+      const classDiv = document.getElementById('rep-m4-classifications');
+      classDiv.innerHTML = regionalData
+        .map((row) => {
+          const sel = document.getElementById(`class-${row.id}`);
+          const label = sel.value === 'stable' ? 'Growing / Stable (≤ 8%)' : sel.value === 'declining' ? 'Shrinking / Declining (> 8%)' : 'Unclassified';
+          return `<div><strong>${row.country} (${row.carcass.toFixed(1)}%):</strong> ${label}</div>`;
+        })
+        .join('');
+
+      document.getElementById('rep-m4-cer1').textContent = document.getElementById('m4-cer-1').value.trim() || 'No response entered.';
+      document.getElementById('rep-m4-cer2').textContent = document.getElementById('m4-cer-2').value.trim() || 'No response entered.';
+
+      document.getElementById('print-report-modal').classList.remove('hidden');
+    }
+
+    function closeReportModal() {
+      document.getElementById('print-report-modal').classList.add('hidden');
+    }
+
+    function valOrDash(id) {
+      const v = document.getElementById(id).value;
+      return v !== '' ? v : '—';
+    }
+  </script>
+</body>
+</html>
